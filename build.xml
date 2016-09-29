@@ -1,0 +1,108 @@
+<project name="RBSSeqTools" basedir="." default="main">
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>  
+	
+	<property file="build.properties"/>
+	<property environment="env"/>
+	
+	<target name="clean">
+		<delete dir="${release.base.dir}"/>
+	</target>
+
+	
+	<target name="master-jar" description="creates the master jar file with all code" depends="clean">
+	    <mkdir dir="${classes.dir}"/>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" encoding="ISO-8859-1" debug="true" debuglevel="lines,vars,source">
+			<classpath>
+				<fileset dir="${library.jar}" includes="*jar"/>
+			</classpath>
+		</javac>
+		
+		<!-- Copy Driver -->
+		<macrodef name="copy-class">
+			<attribute name="jarpath"/>
+			<sequential>
+				<!-- <mkdir dir="${release.build.dir}/@{jarpath}"/> -->
+				<copy todir="${release.build.dir}/@{jarpath}">
+					<fileset dir="${classes.dir}/@{jarpath}">
+						<include name="**/*class"/>
+						<include name="**/*properties"/>
+					</fileset>
+				</copy>
+			
+			</sequential>
+		</macrodef>
+		
+		<!-- Load in jar names and copy them to the build directory -->
+		<echo>Copying class files</echo>
+				
+		<for list="${class.select}" param="jar.location">
+			<sequential>
+				<copy-class jarpath="@{jar.location}"/>
+			</sequential>
+		</for>
+		
+		
+		<!-- Build the jar -->
+		<mkdir dir="${release.master.jar.dir}"/>
+		<jar destfile="${release.master.jar.dir}/bioToolsCodeLibrary.jar" basedir="${release.build.dir}" compress="false">
+			<zipgroupfileset dir="${library.jar}" includes="*.jar" />
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Implementation-Vendor" value="Implementation-Vendor: University of Utah Bioinformatics Shared Resource (http://bioserver.hci.utah.edu)"/>
+				<attribute name="Implementation-Version" value="${release.name}"/>
+			</manifest>
+		</jar>
+		
+		<!-- Clean up build directory -->
+		<delete dir="${release.build.dir}"/>
+				
+	</target>
+	
+					
+	
+	<target name="worker-jars" description="Creates individual jar files" depends="clean,master-jar">
+		<!-- Worker Jar Driver -->
+		<macrodef name="packaging">
+			<attribute name="jarname"/>
+			<attribute name="jarpath"/>
+			<sequential>
+				<jar destfile="${release.worker.jar.dir}/@{jarname}" compress="false">
+					<manifest> 
+						<attribute name="Main-Class" value="@{jarpath}/@{jarname}"/>
+						<attribute name="Class-Path" value="../LibraryJars/bioToolsCodeLibrary.jar"/>
+						<attribute name="Manifest-Version" value="1.0"/>
+						<attribute name="Implementation-Version" value="USeq_${version}"/>
+					</manifest>
+				</jar>
+			</sequential>
+		</macrodef>
+		
+		
+		<!-- Load in jar names and call Jar Driver -->						
+		<for list="${jar.select}" param="jar.location">
+			<sequential>
+				<propertyregex property="jar.path" input="@{jar.location}" regexp="^(.+)/(.+)$" select="\1" override="true"/>
+				<propertyregex property="jar.name" input="@{jar.location}" regexp="^(.+)/(.+)$" select="\2" override="true"/>
+				<if>
+					<equals arg1="${jar.name}" arg2="GWrap_GUI_ClickMe"/>
+					<then>
+						<gui-packaging jarpath="${jar.path}" jarname="${jar.name}"/>
+					</then>
+					<else>
+						<packaging jarpath="${jar.path}" jarname="${jar.name}"/>
+					</else>
+				</if>
+			</sequential>
+		</for>
+	</target>
+					
+	<target name="build-release" depends="clean,master-jar,worker-jars">
+		<zip destfile="${release.base.dir}/SourceCode.zip" basedir="${src.dir}"/>
+		<zip destfile="${base.dir}/BSSeqTools_${version}.zip" basedir="${base.dir}" includes="${release.name}/**"/>
+	</target>
+	
+	<target name="main" depends="build-release"/>
+	
+				
+	
+</project>
