@@ -43,7 +43,7 @@ public class ScorePseudouridinePositions {
 	private int minBsCov = 10;
 	private int minNbsCov = 10;
 	private int minBsDel = 5;
-	private double minNbsFrac = 0.01;
+	private double maxNbsFrac = 0.01;
 	private double minBsFrac = 0.005;
 	private int flankLength = 4;
 	private int delDistance = 5;
@@ -71,7 +71,7 @@ public class ScorePseudouridinePositions {
 	private int minCovBsFilter = 0;
 	private int minCovNbsFilter = 0;
 	private int minDelBsFilter = 0;
-	private int minNbsFractionFilter = 0;
+	private int maxNbsFractionFilter = 0;
 	private int minBsFractionFilter = 0;
 	private int minObsOK = 0;
 	private int totalPositions = 0;
@@ -178,9 +178,9 @@ public class ScorePseudouridinePositions {
 		System.out.println(String.format("%d positions processed",totalPositions));
 		System.out.println(String.format("Fewer than %d deletions in bisulfite sample: %d (%.4f%%)",minBsDel,minDelBsFilter,(float)minDelBsFilter/totalPositions*100));
 		System.out.println(String.format("Fewer than %d coverage in bisulfite sample: %d (%.4f%%)",minBsCov,minCovBsFilter,(float)minCovBsFilter/totalPositions*100));
-		System.out.println(String.format("Deletion rate lower than %.4f%% in bisulfite sample: %d (%.4f%%)",minBsFrac,minBsFractionFilter,(float)minBsFractionFilter/totalPositions*100));
+		System.out.println(String.format("Deletion rate lower than %.4f in bisulfite sample: %d (%.4f%%)",minBsFrac,minBsFractionFilter,(float)minBsFractionFilter/totalPositions*100));
 		System.out.println(String.format("Fewer than %d coverage in nbs sample: %d (%.4f%%)",minNbsCov,minCovNbsFilter,(float)minCovNbsFilter/totalPositions*100));
-		System.out.println(String.format("Deletion rate higher than %.4f%% in nbs sample: %d (%.4f%%)",minNbsFrac,minNbsFractionFilter,(float)minNbsFractionFilter/totalPositions*100));
+		System.out.println(String.format("Deletion rate higher than %.4f in nbs sample: %d (%.4f%%)",maxNbsFrac,maxNbsFractionFilter,(float)maxNbsFractionFilter/totalPositions*100));
 		System.out.println(String.format("Passing positions: %d (%.4f%%)",minObsOK,(float)minObsOK/totalPositions*100));
 		System.out.println(String.format("Positons after collapsing: %d (%.4f%%)",afterCollapse,(float)afterCollapse/minObsOK*100));
 		System.out.println("\n\n******* Artifact and Confidence Filtering ******");
@@ -756,8 +756,8 @@ public class ScorePseudouridinePositions {
 			status += "minBsCov;";
 		}
 		
-		if (fracNBS > minNbsFrac) {
-			minNbsFractionFilter++;
+		if (fracNBS > maxNbsFrac) {
+			maxNbsFractionFilter++;
 			status += "minNbsFrac;";
 			//Store potential NBS deletions
 			if (covNBS >= minNbsCov && countNBS >= minBsDel) {
@@ -1043,8 +1043,8 @@ public class ScorePseudouridinePositions {
 			if (line.hasOption("min-nbs-cov")) {
 				minNbsCov = (Integer)line.getParsedOptionValue("min-nbs-cov");
 			}
-			if (line.hasOption("min-nbs-frac")) {
-				minNbsFrac = (Double)line.getParsedOptionValue("min-nbs-frac");
+			if (line.hasOption("max-nbs-frac")) {
+				maxNbsFrac = (Double)line.getParsedOptionValue("max-nbs-frac");
 			}
 			if (line.hasOption("homopolymer")) {
 				hpLength = (Integer)line.getParsedOptionValue("homopolymer");
